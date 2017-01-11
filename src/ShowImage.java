@@ -19,9 +19,15 @@ public class ShowImage {
     Planar<GrayF32> hsv = rgb.createSameShape();
     ColorHsv.rgbToHsv_F32(rgb, hsv);
 
-    ColorHsv.hsvToRgb_F32(hsv, rgb);
-    ShowImages.showWindow(hsv, "hsv");
+    showImage(hsv);
 
+  }
+
+  public static void showImage(Planar<GrayF32> hsv) {
+    Planar<GrayF32> rgb = hsv.createSameShape();
+
+    ColorHsv.hsvToRgb_F32(hsv, rgb);
+    ShowImages.showWindow(rgb, "hsv");
   }
 
 }

@@ -10,10 +10,10 @@ import boofcv.struct.image.Planar;
 public class IsolateTape {
 
   private static BufferedImage image = UtilImageIO
-      .loadImage("imgs/colorhuelarge.png");
+      .loadImage("imgs/goal4.png");
 
   public static void main(String[] args) {
-    showSelectedColor("image", image, 60);
+    showSelectedColor("image", image, 90);
   }
 
   public static void showSelectedColor(String name, BufferedImage image,
@@ -52,7 +52,7 @@ public class IsolateTape {
         float dist = (float) ((dh * 180) / Math.PI);
         float dist2 = dv;
 
-        System.out.println(dist);
+        // System.out.println(dist);
 
         if (dist2 >= maxDist2) {
           if (minDist1 <= dist && maxDist1 >= dist) {

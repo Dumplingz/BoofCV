@@ -6,18 +6,18 @@ import boofcv.io.image.ConvertBufferedImage;
 import boofcv.io.image.UtilImageIO;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.Planar;
-import georegression.metric.UtilAngle;
 
 public class IsolateTape {
 
-  private static BufferedImage image = UtilImageIO.loadImage("imgs/goal2.png");
+  private static BufferedImage image = UtilImageIO
+      .loadImage("imgs/colorhuelarge.png");
 
   public static void main(String[] args) {
-    showSelectedColor("image", image, 40);
+    showSelectedColor("image", image, 60);
   }
 
   public static void showSelectedColor(String name, BufferedImage image,
-      float value) {
+      float hue) {
     Planar<GrayF32> input = ConvertBufferedImage.convertFromMulti(image, null,
         true, GrayF32.class);
     Planar<GrayF32> hsv = input.createSameShape();
@@ -27,8 +27,8 @@ public class IsolateTape {
 
     // Euclidean distance squared threshold for deciding which pixels are
     // members of the selected set
-    float maxDist1 = 33;
-    float minDist1 = 30;
+    float minDist1 = 60;
+    float maxDist1 = 180;
     float maxDist2 = 70;
 
     // Extract hue and value bands which are independent of saturation
@@ -44,13 +44,16 @@ public class IsolateTape {
       for (int x = 0; x < hsv.width; x++) {
         // Hue is an angle in radians, so simple subtraction doesn't
         // work
-        float dh = UtilAngle.dist(H.unsafe_get(x, y), value);
-        float dv = UtilAngle.dist(V.unsafe_get(x, y), value);
+        float dh = H.unsafe_get(x, y);
+        float dv = V.unsafe_get(x, y);
 
         // this distance measure is a bit naive, but good enough for to
         // demonstrate the concept
-        float dist = dh;
+        float dist = (float) ((dh * 180) / Math.PI);
         float dist2 = dv;
+
+        System.out.println(dist);
+
         if (dist2 >= maxDist2) {
           if (minDist1 <= dist && maxDist1 >= dist) {
             output.setRGB(x, y, image.getRGB(x, y));

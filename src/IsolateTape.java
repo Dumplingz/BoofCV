@@ -8,7 +8,7 @@ import boofcv.struct.image.Planar;
 
 public class IsolateTape {
 
-	public static void showSelectedColor(String name, BufferedImage image, float hue, float minHue, float maxHue,
+	public static BufferedImage showSelectedColor(String name, BufferedImage image, float hue, float minHue, float maxHue,
 			float minValue, float maxValue) {
 		Planar<GrayF32> input = ConvertBufferedImage.convertFromMulti(image, null, true, GrayF32.class);
 		Planar<GrayF32> hsv = input.createSameShape();
@@ -46,7 +46,7 @@ public class IsolateTape {
 			}
 		}
 
-		ShowImages.showWindow(output, "Showing " + name);
+		return output;
 	}
 
 }

@@ -9,6 +9,10 @@ import boofcv.struct.image.Planar;
 
 public class ShowImage {
 
+  /***
+   * 
+   * @param hsv
+   */
   public static void showImage(Planar<GrayF32> hsv) {
     Planar<GrayF32> rgb = hsv.createSameShape();
 

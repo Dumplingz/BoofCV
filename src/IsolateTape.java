@@ -17,6 +17,7 @@ import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
 import boofcv.alg.filter.binary.ThresholdImageOps;
 import boofcv.alg.filter.blur.BlurImageOps;
+import boofcv.alg.filter.blur.GBlurImageOps;
 import boofcv.alg.misc.ImageStatistics;
 import boofcv.alg.shapes.ShapeFittingOps;
 import boofcv.alg.shapes.polygon.BinaryPolygonDetector;
@@ -104,6 +105,7 @@ public class IsolateTape {
   }
 
   /***
+   * Draws polygons
    * 
    * @param image
    * @param detector
@@ -150,8 +152,11 @@ public class IsolateTape {
    * A binary image is an image with two values - black or white
    * 
    * @param image
+   *          a BufferedImage to turn black or white
    * @param threshold
-   * @return
+   *          anything with brightness value over the threshold will be set to
+   *          black; others will become white.
+   * @return a new BufferedImage that is completely black or white
    */
   public static BufferedImage convertToBinaryImage(BufferedImage image,
       int threshold) {
@@ -163,6 +168,21 @@ public class IsolateTape {
     BufferedImage visualBinary = VisualizeBinaryData.renderBinary(binary, false,
         null);
     return visualBinary;
+  }
+
+  public static BufferedImage gaussianBlur(BufferedImage image, int radius) {
+    GrayF32 input = ConvertBufferedImage.convertFromSingle(image, null,
+        GrayF32.class);
+    GrayF32 blurred = GBlurImageOps.gaussian(input, null, 0.0, radius,
+        null);
+    return ConvertBufferedImage.convertTo(blurred, null);
+  }
+
+  public static BufferedImage medianBlur(BufferedImage image, int radius) {
+    GrayF32 input = ConvertBufferedImage.convertFromSingle(image, null,
+        GrayF32.class);
+    GrayF32 blurred = GBlurImageOps.median(input, null, radius);
+    return ConvertBufferedImage.convertTo(blurred, null);
   }
 
 }

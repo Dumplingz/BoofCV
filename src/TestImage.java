@@ -13,8 +13,16 @@ public class TestImage {
     BufferedImage origImage = UtilImageIO.loadImage("imgs/goalRetake5.JPG");
     BufferedImage image = IsolateTape.filterSelectedHSVColor(origImage, 100f,
         180f, 70f, 255f);
+    
+    
     image = IsolateTape.convertToBinaryImage(image, 0);
+    
 
+    System.out.println(System.currentTimeMillis());
+    image = IsolateTape.gaussianBlur(image, 90);
+    System.out.println(System.currentTimeMillis());
+   
+    System.out.println(System.currentTimeMillis());
     ListDisplayPanel panel = new ListDisplayPanel();
 
     // first configure the detector to only detect convex shapes with 3 to 7

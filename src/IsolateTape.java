@@ -2,49 +2,28 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.List;
-import java.util.Random;
 
 import org.ddogleg.struct.FastQueue;
 
 import boofcv.alg.color.ColorHsv;
-import boofcv.alg.feature.detect.edge.CannyEdge;
-import boofcv.alg.feature.detect.edge.EdgeContour;
-import boofcv.alg.feature.detect.edge.EdgeSegment;
-import boofcv.alg.filter.binary.BinaryImageOps;
-import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
 import boofcv.alg.filter.binary.ThresholdImageOps;
-import boofcv.alg.filter.blur.BlurImageOps;
 import boofcv.alg.filter.blur.GBlurImageOps;
-import boofcv.alg.misc.ImageStatistics;
-import boofcv.alg.shapes.ShapeFittingOps;
 import boofcv.alg.shapes.polygon.BinaryPolygonDetector;
-import boofcv.core.image.ConvertImage;
-import boofcv.factory.feature.detect.edge.FactoryEdgeDetectors;
-import boofcv.factory.shape.ConfigPolygonDetector;
-import boofcv.factory.shape.FactoryShapeDetector;
 import boofcv.gui.ListDisplayPanel;
 import boofcv.gui.binary.VisualizeBinaryData;
 import boofcv.gui.feature.VisualizeShapes;
-import boofcv.gui.image.ShowImages;
-import boofcv.io.UtilIO;
 import boofcv.io.image.ConvertBufferedImage;
-import boofcv.io.image.UtilImageIO;
-import boofcv.struct.ConnectRule;
-import boofcv.struct.PointIndex_I32;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.Planar;
-import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Polygon2D_F64;
 
 public class IsolateTape {
 
   /***
    * Filters out any values out side of the specified hues and lightnesses.
-   * 
+   *
    * @param image
    *          an input of BufferedImage to filter the colors out from
    * @param minHueDegree
@@ -104,14 +83,65 @@ public class IsolateTape {
     return output;
   }
 
+  /**
+   *
+   * @param image
+   * @return
+   */
+  public static BufferedImage getCenterPoint(BufferedImage binaryImage) {
+
+    // Make a planar image of the given image
+    Planar<GrayF32> input = ConvertBufferedImage.convertFromMulti(binaryImage,
+        null,
+        true, GrayF32.class);
+
+    System.out.println(input.getBand(0).get(10, 10));
+
+    // create Planar same size as input. DOES NOT have any values
+
+    BufferedImage output = new BufferedImage(input.width, input.height,
+        BufferedImage.TYPE_INT_RGB);
+
+    long numBlackPixels = 0;
+    long sumX = 0;
+    long sumY = 0;
+
+    // step through each pixel and find its value
+    for (int x = 0; x < input.width; x++) {
+      for (int y = 0; y < input.height; y++) {
+        int dv = (int) input.getBand(0).get(x, y);
+
+        if (dv == 0) {
+          numBlackPixels++;
+          sumX += x;
+          sumY += y;
+          output.setRGB(x, y, 255000);
+        }
+      }
+    }
+
+    int avgX = (int) (sumX / numBlackPixels);
+    int avgY = (int) (sumY / numBlackPixels);
+
+    int size = 10;
+    for (int i = -size; i < size; i++) {
+      for (int j = -size; j < size; j++) {
+        output.setRGB(avgX + i, avgY + j, 255);
+      }
+    }
+    return output;
+  }
+
   /***
    * Draws polygons
-   * 
+   *
    * @param image
    * @param detector
    * @param panel
    * @return
    */
+
+  // graphics2d is not doing anything
   public static BufferedImage processPolygons(BufferedImage image,
       BinaryPolygonDetector<GrayU8> detector, ListDisplayPanel panel) {
 
@@ -150,7 +180,7 @@ public class IsolateTape {
 
   /***
    * A binary image is an image with two values - black or white
-   * 
+   *
    * @param image
    *          a BufferedImage to turn black or white
    * @param threshold
@@ -163,11 +193,37 @@ public class IsolateTape {
     GrayF32 input = ConvertBufferedImage.convertFromSingle(image, null,
         GrayF32.class);
     GrayU8 binary = new GrayU8(input.width, input.height);
-    ThresholdImageOps.threshold(input, binary, (float) threshold, true);
+    ThresholdImageOps.threshold(input, binary, threshold, true);
 
     BufferedImage visualBinary = VisualizeBinaryData.renderBinary(binary, false,
         null);
     return visualBinary;
+  }
+
+  public static BufferedImage getBinaryImage(BufferedImage image) {
+
+    GrayF32 input = ConvertBufferedImage.convertFromSingle(image, null,
+        GrayF32.class);
+    double threshold = GThresholdImageOps.computeOtsu(input, 0, 255);
+    return getBinaryImage(image, (float) threshold);
+
+  }
+
+  public static BufferedImage getBinaryImage(BufferedImage image,
+      float threshold) {
+
+    GrayF32 input = ConvertBufferedImage.convertFromSingle(image, null,
+        GrayF32.class);
+    GrayU8 binary = new GrayU8(input.width, input.height);
+
+    // Apply the threshold to create a binary image
+
+    ThresholdImageOps.threshold(input, binary, threshold, true);
+    BufferedImage visualBinary = VisualizeBinaryData.renderBinary(binary, false,
+        null);
+
+    return visualBinary;
+
   }
 
   public static BufferedImage gaussianBlur(BufferedImage image, int radius) {

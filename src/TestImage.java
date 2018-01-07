@@ -1,30 +1,77 @@
 import java.awt.image.BufferedImage;
+import java.io.File;
 
 import boofcv.gui.ListDisplayPanel;
 import boofcv.gui.image.ShowImages;
 import boofcv.io.image.UtilImageIO;
 
 public class TestImage {
+
+  static boolean debug = true;
+  static boolean original = true;
+
+  static int BLUR_CONSTANT = 1;
+
+  static String directory = "imgs/2018PowerUp/";
+
+  static ListDisplayPanel panel = new ListDisplayPanel();
+
   public static void main(String[] args) {
-    ListDisplayPanel panel = new ListDisplayPanel();
+    // int numFiles = 1;
+    // File[] files = getFiles(directory);
+    // for (File f : files) {
+    // String name = f.getName();
+    // name = directory + name;
+    //
+    // System.out.println(name);
+    // long x = System.currentTimeMillis();
+    // ImageProcessing(name);
+    // System.out.println("Runtime of File #" + numFiles + ": "
+    // + (System.currentTimeMillis() - x) + "\n");
+    // numFiles++;
+    // }
 
-    BufferedImage origImage = UtilImageIO.loadImage("imgs/goalRetake5.JPG");
+    ImageProcessing("imgs/2018PowerUp/IMG_8271.JPG");
+    ShowImages.showWindow(panel, "Box finder", true);
 
-    BufferedImage image = IsolateTape.getBinaryImage(origImage, 200);
+  }
 
-    panel.addImage(origImage, "asdf1");
-    panel.addImage(image, "asdf2");
+  public static File[] getFiles(String directory) {
+    return new File(directory).listFiles();
 
-    BufferedImage hsvImage = IsolateTape.filterSelectedHSVColor(origImage, 100f,
-        180f, 70f, 255f);
-    panel.addImage(hsvImage, "plswork1");
+  }
+
+  public static void ImageProcessing(String FileName) {
+
+    BufferedImage origImage = UtilImageIO
+        .loadImage(FileName);
+
+    if (debug) {
+      panel.addImage(origImage, "original");
+
+    }
+    // panel.addImage(image, "asdf2");
+
+    BufferedImage hsvImage = IsolateTape.resizeImage(origImage, 200, 100);
+
+    if (debug || original) {
+      panel.addImage(hsvImage, "resize");
+    }
+
+    hsvImage = IsolateTape.filterSelectedHSVColor(hsvImage, 50f,
+        100f, .25f, 1f, 120f, 255f);
+    if (debug) {
+
+      panel.addImage(hsvImage, "filter");
+    }
 
     hsvImage = IsolateTape.convertToBinaryImage(hsvImage, 0);
-    panel.addImage(hsvImage, "plswork2");
+    if (debug) {
 
-    System.out.println(System.currentTimeMillis());
-    hsvImage = IsolateTape.gaussianBlur(hsvImage, 20);
-    System.out.println(System.currentTimeMillis());
+      panel.addImage(hsvImage, "b/w");
+    }
+
+    hsvImage = IsolateTape.gaussianBlur(hsvImage, BLUR_CONSTANT);
 
     // // first configure the detector to only detect convex shapes with 3 to 7
     // // sides
@@ -40,11 +87,14 @@ public class TestImage {
     // detector = FactoryShapeDetector.polygon(config, GrayU8.class);
     //
     // IsolateTape.processPolygons(image, detector, panel);
-    panel.addImage(hsvImage, "plswork3");
+
+    if (debug) {
+
+      panel.addImage(hsvImage, "blur");
+    }
 
     hsvImage = IsolateTape.getCenterPoint(hsvImage);
-    panel.addImage(hsvImage, "Find Center Point");
+    panel.addImage(hsvImage, "Find Center Point of " + FileName);
 
-    ShowImages.showWindow(panel, "Found Polygons", true);
   }
 }

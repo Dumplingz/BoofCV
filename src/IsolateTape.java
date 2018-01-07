@@ -1,6 +1,7 @@
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 
 import org.ddogleg.struct.FastQueue;
@@ -30,6 +31,10 @@ public class IsolateTape {
    *          minimum hue (in degrees from 0-360) allowed
    * @param maxHueDegree
    *          maximum hue (in degrees from 0-360) allowed
+   * @param minSat
+   *          minimum saturation (0-255) allowed
+   * @param maxSat
+   *          maximum saturation (0-255) allowed
    * @param minValue
    *          minimum value, or lightness (0-255) allowed
    * @param maxValue
@@ -38,7 +43,8 @@ public class IsolateTape {
    */
   public static BufferedImage filterSelectedHSVColor(
       BufferedImage image, float minHueDegree,
-      float maxHueDegree, float minValue, float maxValue) {
+      float maxHueDegree, float minSat, float maxSat, float minValue,
+      float maxValue) {
 
     // Make a planar image of the given image
     Planar<GrayF32> input = ConvertBufferedImage.convertFromMulti(image, null,
@@ -52,6 +58,7 @@ public class IsolateTape {
 
     // Extract hue and value bands which are independent of saturation
     GrayF32 H = hsv.getBand(0);
+    GrayF32 S = hsv.getBand(1);
     GrayF32 V = hsv.getBand(2);
 
     // Makes a new BufferedImage that is completely black
@@ -63,18 +70,24 @@ public class IsolateTape {
       for (int x = 0; x < hsv.width; x++) {
         // Get values for hue and value
         float dh = H.unsafe_get(x, y);
+        float ds = S.unsafe_get(x, y);
         float dv = V.unsafe_get(x, y);
 
         // Hue is an angle in radians, so simple subtraction doesn't
         // work
         float hueDegree = (float) ((dh * 180) / Math.PI);
+        float saturationValue = ds;
         float brightnessValue = dv;
 
-        // Test if each pixel is within the range of brightness and hue
-        if (brightnessValue >= minValue && brightnessValue <= maxValue) {
-          if (minHueDegree <= hueDegree && maxHueDegree >= hueDegree) {
-            // If pixel is within the range, then add color back
-            output.setRGB(x, y, image.getRGB(x, y));
+        // Test if each pixel is within the range of brightness, saturation, and
+        // hue
+        if (minValue <= brightnessValue && maxValue >= brightnessValue) {
+          if (minSat <= saturationValue && maxSat >= saturationValue) {
+            if (minHueDegree <= hueDegree && maxHueDegree >= hueDegree) {
+
+              // If pixel is within the range, then add color back
+              output.setRGB(x, y, image.getRGB(x, y));
+            }
           }
         }
       }
@@ -95,7 +108,7 @@ public class IsolateTape {
         null,
         true, GrayF32.class);
 
-    System.out.println(input.getBand(0).get(10, 10));
+    // System.out.println(input.getBand(0).get(10, 10));
 
     // create Planar same size as input. DOES NOT have any values
 
@@ -120,10 +133,14 @@ public class IsolateTape {
       }
     }
 
+    if (numBlackPixels == 0) {
+      return output;
+    }
+
     int avgX = (int) (sumX / numBlackPixels);
     int avgY = (int) (sumY / numBlackPixels);
 
-    int size = 10;
+    int size = 2;
     for (int i = -size; i < size; i++) {
       for (int j = -size; j < size; j++) {
         output.setRGB(avgX + i, avgY + j, 255);
@@ -224,6 +241,19 @@ public class IsolateTape {
 
     return visualBinary;
 
+  }
+
+  public static BufferedImage resizeImage(BufferedImage img, int newW,
+      int newH) {
+    Image tmp = img.getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+    BufferedImage dimg = new BufferedImage(newW, newH,
+        BufferedImage.TYPE_INT_ARGB);
+
+    Graphics2D g2d = dimg.createGraphics();
+    g2d.drawImage(tmp, 0, 0, null);
+    g2d.dispose();
+
+    return dimg;
   }
 
   public static BufferedImage gaussianBlur(BufferedImage image, int radius) {
